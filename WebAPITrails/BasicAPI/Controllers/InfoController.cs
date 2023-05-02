@@ -18,6 +18,7 @@ namespace BasicAPI.Controllers
         // GET: InfoController
         [HttpGet(Name = nameof(GetInfo))]
         [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
         public ActionResult<HotelInfo> GetInfo()
         {
             _hotelinfowrapper.Href = Url.Link(nameof(GetInfo), null);

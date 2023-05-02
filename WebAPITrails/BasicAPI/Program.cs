@@ -1,6 +1,9 @@
 using BasicAPI.Filters;
+using BasicAPI.infrastructure;
 using BasicAPI.Models;
+using BasicAPI.Services;
 using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.EntityFrameworkCore;
 using System.Configuration;
 
 namespace BasicAPI
@@ -23,6 +26,8 @@ namespace BasicAPI
                 builder.Configuration.GetSection("Info")
                 );
 
+            builder.Services.AddDbContext<HotelApiDbcontext>
+                (options => options.UseInMemoryDatabase("OmarDb"), ServiceLifetime.Transient);
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -43,7 +48,10 @@ namespace BasicAPI
 
                 }
                 );
+            builder.Services.AddScoped<IRoomService, RoomService>();
+            builder.Services.AddAutoMapper(opt => opt.AddProfile<MappingProfile>());
             var app = builder.Build();
+            intializeDatabase(app);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -64,6 +72,24 @@ namespace BasicAPI
             app.MapControllers();
 
             app.Run();
+        }
+
+        private static void intializeDatabase(WebApplication app)
+        {
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+
+                try
+                {
+                    SeedData.InitializeAsync(services).Wait();
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "Error Occured in intializeDatabase");
+                }
+            }
         }
     }
 }
